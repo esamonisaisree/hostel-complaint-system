@@ -1,0 +1,103 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hostel Complaint Management</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Hostel Complaint Management System</h1>
+    <p>Report hostel problems and check their status.</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Submit a Complaint</h2>
+
+      <form action="/complaints" method="POST">
+        <label>Student Name</label>
+        <input name="studentName" required>
+
+        <label>Room Number</label>
+        <input name="roomNumber" required>
+
+        <label>Complaint Category</label>
+        <select name="category" required>
+          <option value="">Choose a category</option>
+          <option>Water Supply</option>
+          <option>Electricity</option>
+          <option>Cleaning</option>
+          <option>Room Maintenance</option>
+          <option>Other</option>
+        </select>
+
+        <label>Complaint Description</label>
+        <textarea name="description" required></textarea>
+
+        <button type="submit">Submit Complaint</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Complaint Records</h2>
+      <p>Submitted complaints will appear here.</p>
+      <div id="complaints">Loading complaints...</div>
+    </section>
+  </main>
+
+  <script>
+    async function loadComplaints() {
+      const response = await fetch("/api/complaints");
+      const complaints = await response.json();
+      const container = document.getElementById("complaints");
+
+      if (complaints.length === 0) {
+        container.textContent = "No complaints submitted yet.";
+        return;
+      }
+
+      container.replaceChildren();
+
+      complaints.forEach(complaint => {
+        const card = document.createElement("div");
+        card.className = "complaint";
+
+        const details = document.createElement("p");
+        details.textContent =
+          `#${complaint.id} | ${complaint.studentName} | Room ${complaint.roomNumber} | ${complaint.category} | ${complaint.description} | ${complaint.date}`;
+
+        const status = document.createElement("p");
+        status.textContent = `Status: ${complaint.status}`;
+
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = `/complaints/${complaint.id}/status`;
+
+        const select = document.createElement("select");
+        select.name = "status";
+
+        ["Pending", "In Progress", "Resolved"].forEach(value => {
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = value;
+          option.selected = value === complaint.status;
+          select.appendChild(option);
+        });
+
+        const button = document.createElement("button");
+        button.type = "submit";
+        button.textContent = "Update Status";
+
+        form.append(select, button);
+        card.append(details, status, form);
+        container.appendChild(card);
+      });
+    }
+
+    loadComplaints();
+  </script>
+</body>
+</html>
